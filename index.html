@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Texas Hold'em GTO Solver / 德州扑克GTO求解器</title>
+    <link rel="stylesheet" href="src/ui/style.css">
+</head>
+<body>
+    <!-- 顶部控制栏 / Top Control Bar -->
+    <header class="control-bar">
+        <h1>Texas Hold'em GTO Solver / 德州扑克GTO求解器</h1>
+        <div class="controls">
+            <button id="btn-new-hand" class="btn-primary">
+                New Hand / 新牌局
+            </button>
+            <button id="btn-random-sim" class="btn-secondary">
+                Random Sim / 随机仿真
+            </button>
+            <button id="btn-reveal-all" class="btn-secondary">
+                Reveal All / 显示所有牌
+            </button>
+            <label class="toggle-label">
+                <input type="checkbox" id="toggle-gto" checked>
+                <span>GTO Advisor / GTO建议</span>
+            </label>
+            <div class="mode-selector">
+                <label>
+                    <input type="radio" name="game-mode" value="human" checked>
+                    Human Play / 人工对弈
+                </label>
+                <label>
+                    <input type="radio" name="game-mode" value="ai-vs-ai">
+                    AI vs AI / AI对弈
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主游戏区域 / Main Game Area -->
+    <main class="game-container">
+        <!-- 扑克桌 / Poker Table -->
+        <div class="poker-table">
+            <!-- 玩家2 (BB) / Player 2 -->
+            <div class="player-position player-top" id="player-1">
+                <div class="player-info">
+                    <span class="player-name">Player 2 (BB)</span>
+                    <span class="player-stack" id="stack-1">10000</span>
+                    <span class="dealer-btn" id="dealer-1"></span>
+                </div>
+                <div class="player-cards" id="cards-1">
+                    <div class="card card-back"></div>
+                    <div class="card card-back"></div>
+                </div>
+                <div class="player-bet" id="bet-1"></div>
+                <div class="player-status" id="status-1"></div>
+            </div>
+
+            <!-- 公共牌区域 / Community Cards Area -->
+            <div class="community-area">
+                <div class="pot-display">
+                    <span class="pot-label">Pot / 底池</span>
+                    <span class="pot-amount" id="pot-amount">0</span>
+                </div>
+                <div class="community-cards" id="community-cards">
+                    <div class="card slot"></div>
+                    <div class="card slot"></div>
+                    <div class="card slot"></div>
+                    <div class="card slot"></div>
+                    <div class="card slot"></div>
+                </div>
+                <div class="phase-indicator" id="phase-indicator">Preflop / 翻前</div>
+            </div>
+
+            <!-- 玩家1 (BTN/SB) / Player 1 -->
+            <div class="player-position player-bottom active" id="player-0">
+                <div class="player-info">
+                    <span class="dealer-btn visible" id="dealer-0">D</span>
+                    <span class="player-name">Player 1 (BTN)</span>
+                    <span class="player-stack" id="stack-0">10000</span>
+                </div>
+                <div class="player-cards" id="cards-0">
+                    <div class="card card-back"></div>
+                    <div class="card card-back"></div>
+                </div>
+                <div class="player-bet" id="bet-0">
+                    <span class="chip"></span>
+                    <span class="bet-amount">50</span>
+                </div>
+                <div class="player-status" id="status-0"></div>
+            </div>
+        </div>
+
+        <!-- 行动控制区 / Action Control Area -->
+        <div class="action-panel" id="action-panel">
+            <div class="action-info">
+                <span id="action-text">Your turn / 你的回合</span>
+                <span id="call-amount"></span>
+            </div>
+            <div class="action-buttons" id="action-buttons">
+                <!-- 动态生成 / Dynamically generated -->
+            </div>
+        </div>
+    </main>
+
+    <!-- 侧边栏: GTO建议与信息 / Sidebar: GTO Advisor & Info -->
+    <aside class="sidebar">
+        <!-- GTO策略面板 / GTO Strategy Panel -->
+        <div class="panel gto-panel" id="gto-panel">
+            <h3>GTO Strategy / GTO策略</h3>
+            <div class="gto-info-set" id="gto-info-set"></div>
+            <div class="gto-actions" id="gto-actions"></div>
+            <div class="gto-theory" id="gto-theory"></div>
+        </div>
+
+        <!-- 游戏信息 / Game Info -->
+        <div class="panel game-info-panel">
+            <h3>Game Info / 游戏信息</h3>
+            <div class="info-row">
+                <span>Hand # / 手牌</span>
+                <span id="hand-number">0</span>
+            </div>
+            <div class="info-row">
+                <span>Blinds / 盲注</span>
+                <span>50 / 100</span>
+            </div>
+            <div class="info-row">
+                <span>Current Bet / 当前下注</span>
+                <span id="current-bet">100</span>
+            </div>
+            <div class="info-row">
+                <span>To Call / 需跟注</span>
+                <span id="to-call">50</span>
+            </div>
+            <div class="info-row">
+                <span>Pot Odds / 底池赔率</span>
+                <span id="pot-odds">-</span>
+            </div>
+            <div class="info-row">
+                <span>MDF / 最小防守频率</span>
+                <span id="mdf">-</span>
+            </div>
+        </div>
+
+        <!-- 手牌历史 / Hand History -->
+        <div class="panel history-panel">
+            <h3>Hand History / 手牌历史</h3>
+            <div class="history-list" id="history-list"></div>
+        </div>
+
+        <!-- CFR训练控制 / CFR Training Control -->
+        <div class="panel training-panel">
+            <h3>CFR Training / CFR训练</h3>
+            <div class="training-controls">
+                <label>
+                    Iterations / 迭代次数:
+                    <input type="number" id="train-iterations" value="10000" min="1000" max="100000" step="1000">
+                </label>
+                <button id="btn-train" class="btn-secondary">Train / 训练</button>
+                <button id="btn-export" class="btn-secondary">Export / 导出</button>
+            </div>
+            <div class="training-progress" id="training-progress"></div>
+        </div>
+    </aside>
+
+    <!-- 结果弹窗 / Result Modal -->
+    <div class="modal" id="result-modal">
+        <div class="modal-content">
+            <h2 id="result-title">Hand Result / 牌局结果</h2>
+            <div class="result-details" id="result-details"></div>
+            <button class="btn-primary" id="btn-close-modal">OK</button>
+        </div>
+    </div>
+
+    <script type="module" src="src/ui/app.js"></script>
+</body>
+</html>

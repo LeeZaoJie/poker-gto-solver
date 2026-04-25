@@ -1,0 +1,784 @@
+/**
+ * ============================================================================
+ * style.css - 德州扑克GTO求解器样式 / Poker GTO Solver Styles
+ * ============================================================================
+ * 设计原则 / Design Principles:
+ * - 深色主题模拟真实扑克桌 / Dark theme simulating real poker table
+ * - 响应式布局 / Responsive layout
+ * - 清晰的视觉层次 / Clear visual hierarchy
+ * - 中文/英文双语兼容 / Bilingual Chinese/English support
+ */
+
+:root {
+    --table-green: #1a5f2a;
+    --table-green-light: #2d7a3e;
+    --table-border: #0d3d18;
+    --card-width: 70px;
+    --card-height: 100px;
+    --chip-red: #c41e3a;
+    --chip-blue: #1e4c8c;
+    --chip-green: #228b22;
+    --chip-black: #1a1a1a;
+    --text-gold: #d4af37;
+    --text-light: #f0f0f0;
+    --text-dim: #888;
+    --accent-blue: #4a9eff;
+    --accent-green: #4caf50;
+    --accent-red: #f44336;
+    --panel-bg: rgba(0, 0, 0, 0.7);
+    --hover-bg: rgba(255, 255, 255, 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: #0a0a0a;
+    color: var(--text-light);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ============================================================================
+   顶部控制栏 / Top Control Bar
+   ============================================================================ */
+.control-bar {
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--text-gold);
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.control-bar h1 {
+    font-size: 1.3rem;
+    color: var(--text-gold);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-blue), #2e7bd6);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(74, 158, 255, 0.4);
+}
+
+.btn-secondary {
+    background: rgba(255,255,255,0.1);
+    color: var(--text-light);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.btn-secondary:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.btn-action {
+    padding: 12px 24px;
+    font-size: 1rem;
+    min-width: 120px;
+}
+
+.btn-fold {
+    background: linear-gradient(135deg, #8b0000, var(--accent-red));
+    color: white;
+}
+
+.btn-fold:hover {
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+}
+
+.btn-call {
+    background: linear-gradient(135deg, #2e7d32, var(--accent-green));
+    color: white;
+}
+
+.btn-call:hover {
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.btn-raise {
+    background: linear-gradient(135deg, #f57c00, #ff9800);
+    color: white;
+}
+
+.btn-raise:hover {
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+}
+
+.toggle-label, .mode-selector label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.mode-selector {
+    display: flex;
+    gap: 12px;
+}
+
+input[type="checkbox"], input[type="radio"] {
+    cursor: pointer;
+}
+
+/* ============================================================================
+   主布局 / Main Layout
+   ============================================================================ */
+.game-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 20px;
+}
+
+/* 侧边栏与主区域 / Sidebar and Main Area */
+body {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    grid-template-columns: 1fr 320px;
+    grid-template-areas:
+        "header header"
+        "main sidebar";
+}
+
+.control-bar { grid-area: header; }
+.game-container { grid-area: main; }
+.sidebar { grid-area: sidebar; }
+
+@media (max-width: 900px) {
+    body {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "header"
+            "main"
+            "sidebar";
+    }
+}
+
+/* ============================================================================
+   扑克桌 / Poker Table
+   ============================================================================ */
+.poker-table {
+    background: radial-gradient(ellipse at center, var(--table-green-light) 0%, var(--table-green) 50%, var(--table-border) 100%);
+    border-radius: 50% / 30%;
+    padding: 40px 60px;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    box-shadow:
+        inset 0 0 60px rgba(0,0,0,0.5),
+        0 10px 40px rgba(0,0,0,0.5);
+    border: 8px solid #3d2817;
+}
+
+/* ============================================================================
+   玩家位置 / Player Positions
+   ============================================================================ */
+.player-position {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    transition: all 0.3s;
+    min-width: 160px;
+}
+
+.player-position.active {
+    background: rgba(212, 175, 55, 0.15);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+    border: 2px solid var(--text-gold);
+}
+
+.player-position.folded {
+    opacity: 0.5;
+}
+
+.player-position.all-in {
+    background: rgba(244, 67, 54, 0.15);
+    border: 2px solid var(--accent-red);
+}
+
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+}
+
+.player-name {
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+.player-stack {
+    background: rgba(0,0,0,0.6);
+    padding: 4px 10px;
+    border-radius: 12px;
+    color: var(--text-gold);
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.dealer-btn {
+    width: 24px;
+    height: 24px;
+    background: white;
+    color: #333;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.dealer-btn.visible {
+    display: flex;
+}
+
+.player-cards {
+    display: flex;
+    gap: 8px;
+}
+
+.player-bet {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,0,0,0.6);
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    color: var(--text-gold);
+    min-height: 32px;
+}
+
+.player-status {
+    font-size: 0.8rem;
+    color: var(--accent-red);
+    font-weight: 600;
+    min-height: 20px;
+}
+
+/* ============================================================================
+   扑克牌 / Playing Cards
+   ============================================================================ */
+.card {
+    width: var(--card-width);
+    height: var(--card-height);
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    position: relative;
+    user-select: none;
+    transition: transform 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+}
+
+.card.slot {
+    background: rgba(255,255,255,0.1);
+    border: 2px dashed rgba(255,255,255,0.2);
+}
+
+.card.card-back {
+    background: linear-gradient(135deg, #b22222 0%, #8b0000 100%);
+    border: 3px solid white;
+}
+
+.card.card-back::after {
+    content: "";
+    width: 80%;
+    height: 80%;
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(255,255,255,0.1) 0px,
+        rgba(255,255,255,0.1) 4px,
+        transparent 4px,
+        transparent 8px
+    );
+    border-radius: 4px;
+}
+
+.card .suit {
+    font-size: 1.8rem;
+    line-height: 1;
+}
+
+.card .rank {
+    position: absolute;
+    top: 4px;
+    left: 6px;
+    font-size: 0.85rem;
+}
+
+.card .rank-bottom {
+    position: absolute;
+    bottom: 4px;
+    right: 6px;
+    font-size: 0.85rem;
+    transform: rotate(180deg);
+}
+
+.card.red {
+    color: #c41e3a;
+}
+
+.card.black {
+    color: #1a1a1a;
+}
+
+/* ============================================================================
+   公共牌区域 / Community Area
+   ============================================================================ */
+.community-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.pot-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.pot-label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.pot-amount {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text-gold);
+    text-shadow: 0 2px 8px rgba(212, 175, 55, 0.5);
+}
+
+.community-cards {
+    display: flex;
+    gap: 10px;
+}
+
+.phase-indicator {
+    background: rgba(0,0,0,0.5);
+    padding: 6px 20px;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* ============================================================================
+   筹码 / Chips
+   ============================================================================ */
+.chip {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--chip-red) 0%, #8b0000 100%);
+    border: 2px dashed white;
+    display: inline-block;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* ============================================================================
+   行动面板 / Action Panel
+   ============================================================================ */
+.action-panel {
+    background: var(--panel-bg);
+    border-radius: 12px;
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.action-info {
+    display: flex;
+    gap: 20px;
+    font-size: 1rem;
+    color: var(--text-light);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* ============================================================================
+   侧边栏面板 / Sidebar Panels
+   ============================================================================ */
+.sidebar {
+    background: #0f0f1a;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+    max-height: calc(100vh - 60px);
+}
+
+.panel {
+    background: var(--panel-bg);
+    border-radius: 10px;
+    padding: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.panel h3 {
+    font-size: 0.9rem;
+    color: var(--text-gold);
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 0.85rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.info-row span:first-child {
+    color: var(--text-dim);
+}
+
+.info-row span:last-child {
+    color: var(--text-light);
+    font-weight: 600;
+}
+
+/* GTO策略面板 / GTO Strategy Panel */
+.gto-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.gto-action-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.03);
+}
+
+.gto-action-item.best {
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.gto-action-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.gto-action-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.gto-action-prob {
+    font-size: 0.9rem;
+    color: var(--text-gold);
+    font-weight: 700;
+}
+
+.gto-action-bar {
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.gto-action-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+    border-radius: 3px;
+    transition: width 0.5s;
+}
+
+.gto-action-reason {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    line-height: 1.3;
+}
+
+.gto-theory {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.gto-theory .theory-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+}
+
+.gto-info-set {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    word-break: break-all;
+    margin-bottom: 8px;
+}
+
+/* 历史记录 / History */
+.history-list {
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.history-item {
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.03);
+}
+
+.history-item .h-phase {
+    color: var(--text-gold);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+}
+
+.history-item .h-action {
+    color: var(--text-light);
+}
+
+.history-item .h-amount {
+    color: var(--accent-green);
+}
+
+/* 训练面板 / Training Panel */
+.training-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.training-controls label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.training-controls input[type="number"] {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--text-light);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.training-progress {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+/* ============================================================================
+   弹窗 / Modal
+   ============================================================================ */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    border: 2px solid var(--text-gold);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.modal-content h2 {
+    color: var(--text-gold);
+    margin-bottom: 16px;
+}
+
+.result-details {
+    margin: 20px 0;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.result-winner {
+    color: var(--accent-green);
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.result-cards {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.result-hand-type {
+    color: var(--text-gold);
+    font-size: 0.9rem;
+}
+
+/* ============================================================================
+   滚动条 / Scrollbar
+   ============================================================================ */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.3);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+/* ============================================================================
+   动画 / Animations
+   ============================================================================ */
+@keyframes dealCard {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) rotateY(90deg);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) rotateY(0);
+    }
+}
+
+.card.dealt {
+    animation: dealCard 0.4s ease-out;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.player-position.active .player-name {
+    animation: pulse 1.5s infinite;
+}
+
+/* 响应式调整 / Responsive Adjustments */
+@media (max-width: 700px) {
+    .poker-table {
+        padding: 20px 30px;
+        min-height: 300px;
+    }
+
+    .card {
+        --card-width: 55px;
+        --card-height: 80px;
+        font-size: 1.2rem;
+    }
+
+    .action-buttons {
+        gap: 8px;
+    }
+
+    .btn-action {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+        min-width: 90px;
+    }
+
+    .control-bar h1 {
+        font-size: 1rem;
+    }
+}
