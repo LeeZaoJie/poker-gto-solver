@@ -13,9 +13,7 @@ import {
     PHASE_PREFLOP, PHASE_FLOP, PHASE_TURN, PHASE_RIVER, PHASE_SHOWDOWN, PHASE_ENDED
 } from '../engine/game.js';
 
-import { evaluateSevenCardHand, calculateEquity, getHandTypeName } from '../engine/evaluator.js';
-
-import { cardSuit } from '../engine/cards.js';
+import { evaluateSevenCardHand, calculateEquity } from '../engine/evaluator.js';
 
 import {
     ACTION_FOLD as ABS_FOLD, ACTION_CHECK_CALL, ACTION_BET_HALF, ACTION_BET_POT, ACTION_BET_ALLIN,
