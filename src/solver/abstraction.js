@@ -16,7 +16,7 @@
  *    Information set encoding - encode game state as string keys
  */
 
-import { calculateEquity, evaluateSevenCardHand } from '../engine/evaluator.js';
+import { evaluateSevenCardHand } from '../engine/evaluator.js';
 
 // ============================================================================
 // 手牌抽象 / Hand Abstraction

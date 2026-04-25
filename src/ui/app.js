@@ -23,6 +23,13 @@ import {
 import { GTOCalculator, MCCFRTrainer } from '../solver/cfr.js';
 
 // ============================================================================
+// 模块级缓存 / Module-level caches
+// ============================================================================
+
+const SUIT_SYMBOLS = { s: '♠', h: '♥', d: '♦', c: '♣' };
+const RANK_INDEX = '23456789TJQKA';
+
+// ============================================================================
 // 全局状态 / Global State
 // ============================================================================
 
@@ -125,6 +132,18 @@ function init() {
 
     els.btnTrain.addEventListener('click', trainCFR);
     els.btnExport.addEventListener('click', exportStrategy);
+
+    // 使用事件委托绑定行动按钮，避免内存泄漏 / Event delegation for action buttons
+    els.actionButtons.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const action = btn.dataset.action;
+        let amount = 0;
+        if (action === ACTION_BET || action === ACTION_RAISE) {
+            amount = promptBetAmount(action);
+        }
+        handlePlayerAction(action, amount);
+    });
 
     // 初始化GTO面板显示 / Init GTO panel visibility
     els.gtoPanel.style.display = showGTO ? 'block' : 'none';
@@ -332,8 +351,8 @@ function estimateEquity(playerId) {
     }
 
     // 翻前: 基于手牌类型粗略估计 / Preflop: rough estimate by hand type
-    const r1 = '23456789TJQKA'.indexOf(p.holeCards[0][0]);
-    const r2 = '23456789TJQKA'.indexOf(p.holeCards[1][0]);
+    const r1 = RANK_INDEX.indexOf(p.holeCards[0][0]);
+    const r2 = RANK_INDEX.indexOf(p.holeCards[1][0]);
     const suited = p.holeCards[0][1] === p.holeCards[1][1];
     const pair = r1 === r2;
 
@@ -421,17 +440,10 @@ function renderPlayers() {
 function createCardHTML(card) {
     const rank = card[0];
     const suit = card[1];
-    const suitSymbols = { s: '♠', h: '♥', d: '♦', c: '♣' };
     const isRed = suit === 'h' || suit === 'd';
-    const symbol = suitSymbols[suit];
+    const symbol = SUIT_SYMBOLS[suit];
 
-    return `
-        <div class="card ${isRed ? 'red' : 'black'}">
-            <span class="rank">${rank}</span>
-            <span class="suit">${symbol}</span>
-            <span class="rank-bottom">${rank}</span>
-        </div>
-    `;
+    return `<div class="card ${isRed ? 'red' : 'black'}"><span class="rank">${rank}</span><span class="suit">${symbol}</span><span class="rank-bottom">${rank}</span></div>`;
 }
 
 function renderCommunityCards() {
@@ -510,18 +522,8 @@ function renderActionPanel() {
     }
     els.actionButtons.innerHTML = html;
 
-    // 绑定按钮事件 / Bind button events
-    els.actionButtons.querySelectorAll('button').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const action = btn.dataset.action;
-            let amount = 0;
-            if (action === ACTION_BET || action === ACTION_RAISE) {
-                amount = promptBetAmount(action);
-            }
-            handlePlayerAction(action, amount);
-        });
-    });
-}
+    // 按钮点击通过事件委托在init中处理 / Button clicks handled via event delegation in init()
+
 
 function getActionButtonClass(action) {
     switch (action) {

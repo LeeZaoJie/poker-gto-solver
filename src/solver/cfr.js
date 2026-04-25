@@ -29,7 +29,6 @@ import {
     ACTION_BET as GAME_BET, ACTION_RAISE as GAME_RAISE, ACTION_ALL_IN as GAME_ALLIN
 } from '../engine/game.js';
 
-import { createDeck, shuffleDeck } from '../engine/cards.js';
 import { calculateEquity, compareHands } from '../engine/evaluator.js';
 
 // ============================================================================

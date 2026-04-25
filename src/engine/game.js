@@ -113,7 +113,7 @@ function createGameState(config = {}) {
  * @returns {Object} 更新后的状态 / Updated state
  */
 function startNewHand(state, keepStacks = true) {
-    const newState = { ...state };
+    const newState = cloneState(state);
     newState.deck = shuffleDeck(createDeck());
     newState.communityCards = [];
     newState.mainPot = 0;
@@ -639,11 +639,56 @@ function endHand(state, winners) {
 
 /**
  * 深拷贝游戏状态 / Deep clone game state
+ * 使用结构化手动拷贝替代JSON序列化，避免CFR训练中的巨大性能开销
+ * Uses structured manual copy instead of JSON serialization to avoid heavy overhead in CFR training
  * @param {Object} state
  * @returns {Object}
  */
 function cloneState(state) {
-    return JSON.parse(JSON.stringify(state));
+    return {
+        bigBlind: state.bigBlind,
+        smallBlind: state.smallBlind,
+        stackSize: state.stackSize,
+        deck: state.deck.slice(),
+        players: [
+            {
+                id: state.players[0].id,
+                name: state.players[0].name,
+                stack: state.players[0].stack,
+                holeCards: state.players[0].holeCards.slice(),
+                isActive: state.players[0].isActive,
+                isAllIn: state.players[0].isAllIn,
+                totalInvested: state.players[0].totalInvested
+            },
+            {
+                id: state.players[1].id,
+                name: state.players[1].name,
+                stack: state.players[1].stack,
+                holeCards: state.players[1].holeCards.slice(),
+                isActive: state.players[1].isActive,
+                isAllIn: state.players[1].isAllIn,
+                totalInvested: state.players[1].totalInvested
+            }
+        ],
+        communityCards: state.communityCards.slice(),
+        mainPot: state.mainPot,
+        sidePots: state.sidePots.map(sp => ({ ...sp })),
+        phase: state.phase,
+        currentPlayer: state.currentPlayer,
+        lastAggressor: state.lastAggressor,
+        currentBet: state.currentBet,
+        lastRaiseSize: state.lastRaiseSize,
+        minRaise: state.minRaise,
+        playerBets: state.playerBets.slice(),
+        potContributions: state.potContributions.slice(),
+        actionsThisRound: [state.actionsThisRound[0].slice(), state.actionsThisRound[1].slice()],
+        streetBets: state.streetBets.map(b => ({ ...b })),
+        winners: state.winners.map(w => ({ ...w })),
+        handHistory: state.handHistory.map(h => ({ ...h })),
+        handNumber: state.handNumber,
+        isHandComplete: state.isHandComplete,
+        isRandomSimulation: state.isRandomSimulation
+    };
 }
 
 /**
